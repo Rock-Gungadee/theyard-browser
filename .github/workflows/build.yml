@@ -50,7 +50,7 @@ jobs:
         run: make package
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: theyard-browser-linux
           path: "*.tar.xz"
