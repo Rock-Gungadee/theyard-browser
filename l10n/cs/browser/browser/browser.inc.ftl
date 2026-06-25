@@ -1,0 +1,7 @@
+identity-allow-site-data = Vždy ukládat soubory cookie a data pro tento web
+urlbar-webgl-notification-anchor =
+    .tooltiptext = Spravovat oprávnění k vytváření kontextů WebGL
+urlbar-webgl-blocked =
+    .tooltiptext = Zablokovali jste vytváření kontextů WebGL pro tento web.
+urlbar-eme-blocked =
+    .tooltiptext = Na tomto webu jste zablokovali přehrávání obsahu chráněného technologií DRM.

@@ -1,0 +1,8 @@
+-screenshots-brand-name = 스크린샷
+-profiler-brand-name = 프로파일러
+-translations-brand-name = 번역
+-firefox-suggest-brand-name = 제안
+-firefox-home-brand-name = 홈페이지
+-firefoxview-brand-name = 탭 뷰
+-firefoxlabs-brand-name = Mozilla의 Firefox 실험실
+-relay-brand-name = Mozilla에 의해 제공됨

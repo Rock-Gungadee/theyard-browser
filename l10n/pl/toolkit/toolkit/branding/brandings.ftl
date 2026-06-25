@@ -1,0 +1,8 @@
+-screenshots-brand-name = Zrzuty ekranu
+-translations-brand-name = Tłumaczenia
+-firefox-suggest-brand-name = Sugestie
+-firefox-home-brand-name = Strona startowa
+-firefoxview-brand-name = Widok kart
+-firefoxlabs-brand-name = Laboratoria Firefoksa od Mozilli
+-profiler-brand-name = Profilowanie
+-relay-brand-name = Przekazywanie od Mozilli

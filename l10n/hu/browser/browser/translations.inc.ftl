@@ -1,0 +1,9 @@
+translations-panel-disable-translations =
+    .label = A fordítások teljes kikapcsolása
+translations-manage-enable =
+    .label = Teljes oldalas fordítások engedélyezése
+translations-manage-autopopup =
+    .label = Felajánlja az olyan oldalak lefordítását, amelyek nem a böngészőben beállított nyelven vannak
+main-context-menu-translate-page =
+    .label = Oldal fordítása…
+    .accesskey = F

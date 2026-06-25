@@ -1,0 +1,11 @@
+permissions-site-webgl-window2 =
+    .title = Sazkarî - Mafên WebGL
+    .style = { permissions-window2.style }
+permissions-site-webgl-desc = Malperên jêrîn daxwaza afirandina çarçoveya WebGL kirine. Tu dikarî diyar bikî ka kîjan malper mafê afirdandinê çarçoveya WebGL bile bistîne. Her wiha tu dikarî daxwazên nû yên ji bo afirdandinê çarçoveya WebGL asteng bikî.
+permissions-site-eme-window2 =
+    .title = Sazkarî - Mafên EME
+    .style = { permissions-window2.style }
+permissions-site-eme-desc = Van malperan daxwaza lîstina naveroka bi DRMê kirine. Tu dikarî diyar bikî kîjan malper dikarin naveroka DRMê bilîzin. Her wiha tu dikarî daxwazên nû yên lîstina naveroka bi DRMê asteng bikî.
+permissions-site-eme-disable-label =
+    .label = Daxwazên nû yên lîstina naveroka DRMê asteng bike
+permissions-site-eme-disable-desc = Ev yek wê rê li ber her malpereke ku di lîsteya jorîn de neyê dîtin bigire, da ku daxwaza mafê ji bo lîstina naveroka DRM neke.
