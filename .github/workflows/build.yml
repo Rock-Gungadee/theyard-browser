@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -27,10 +27,8 @@ jobs:
         run: make fetch
 
       - name: Prepare source directory
-        run: make dir
-
-      - name: Restore required lw files
         run: |
+          make dir
           cp settings/librewolf.cfg librewolf-152.0.2-1/lw/
           cp settings/distribution/policies.json librewolf-152.0.2-1/lw/
           mkdir -p librewolf-152.0.2-1/lw/defaults/pref
