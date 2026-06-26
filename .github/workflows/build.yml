@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
 
     steps:
       - name: Checkout source
@@ -48,7 +48,7 @@ jobs:
       - name: Build
         run: |
           cd librewolf-152.0.2-1
-          ./mach build -- -j4
+          ./mach build -- -j2
 
       - name: Package
         run: make package
