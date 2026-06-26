@@ -28,13 +28,13 @@ jobs:
 
       - name: Prepare source directory
         run: |
+          cp -r l10n ../l10n
           make dir
           cp settings/librewolf.cfg librewolf-152.0.2-1/lw/
           cp settings/distribution/policies.json librewolf-152.0.2-1/lw/
           mkdir -p librewolf-152.0.2-1/lw/defaults/pref
           cp settings/defaults/pref/local-settings.js librewolf-152.0.2-1/lw/defaults/pref/
           cp settings/defaults/pref/local-settings.js librewolf-152.0.2-1/lw/
-          ln -sf $(pwd)/l10n librewolf-152.0.2-1/lw/l10n
 
       - name: Bootstrap
         run: make bootstrap
