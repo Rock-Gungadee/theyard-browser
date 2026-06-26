@@ -162,37 +162,58 @@ def librewolf_patches():
 
     print("-> Applying LibreWolf locales")
     l10n_dir = Path("..", "l10n")
-    for source_path in l10n_dir.rglob("*"):
-        if source_path.is_dir() or source_path.name.endswith(".md"):
-            continue
 
-        rel_path = source_path.relative_to(l10n_dir)
-        if rel_path.parts[0] == "en-US":
-            target_path = Path(
-                rel_path.parts[1],
-                "locales", "en-US",
-                *rel_path.parts[2:]
-            )
-        else:
-            target_path = Path(
-                "lw", "l10n",
-                *rel_path.parts
-            )
-        
-        target_path.parent.mkdir(parents=True, exist_ok=True)
+    if not l10n_dir.exists():
+        print(f"warning: {l10n_dir} not found — skipping LibreWolf locales")
+    else:
+        for source_path in l10n_dir.rglob("*"):
+            if not source_path.is_file() or source_path.name.endswith(".md"):
+                continue
 
-        write_mode = "w"
-        if ".inc" in target_path.name:
-            target_path = target_path.with_name(target_path.name.replace(".inc", ""))
-            write_mode = "a"
+            rel_path = source_path.relative_to(l10n_dir)
+            if len(rel_path.parts) == 0:
+                continue
 
-        print(f"{source_path} {'>' if write_mode == 'w' else '>>'} {target_path}")
+            if rel_path.parts[0] == "en-US":
+                target_path = Path(
+                    rel_path.parts[1],
+                    "locales", "en-US",
+                    *rel_path.parts[2:]
+                )
+            else:
+                target_path = Path(
+                    "lw", "l10n",
+                    *rel_path.parts
+                )
 
-        if not target_path.exists() and write_mode == "a":
-            print(f"warning: target file {target_path} doesn't exist")
-        with open(target_path, write_mode) as target_file:
-            with open(source_path, "r") as source_file:
-                target_file.write(("\n\n" if write_mode == "a" else "") + source_file.read())
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+
+            write_mode = "w"
+            if ".inc" in target_path.name:
+                target_path = target_path.with_name(target_path.name.replace(".inc", ""))
+                write_mode = "a"
+
+            print(f"{source_path} {'>' if write_mode == 'w' else '>>'} {target_path}")
+
+            if not target_path.exists() and write_mode == "a":
+                print(f"warning: target file {target_path} doesn't exist")
+
+            try:
+                with open(source_path, "r") as source_file:
+                    content_text = source_file.read()
+            except FileNotFoundError:
+                print(f"warning: source file {source_path} not found (skipping)")
+                continue
+            except Exception as e:
+                print(f"warning: unexpected error reading {source_path}: {e} (skipping)")
+                continue
+
+            try:
+                with open(target_path, write_mode) as target_file:
+                    target_file.write(("\n\n" if write_mode == "a" else "") + content_text)
+            except Exception as e:
+                print(f"warning: could not write to {target_path}: {e}")
+                continue
 
     leave_srcdir()
 

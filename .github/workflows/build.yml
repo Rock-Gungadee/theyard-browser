@@ -28,7 +28,13 @@ jobs:
 
       - name: Prepare source directory
         run: |
-          cp -r l10n ../l10n
+          if [ -d l10n ]; then
+            echo "l10n directory found; copying to parent"
+            cp -a l10n ../l10n
+            ls -la ../l10n | head -n 20
+          else
+            echo "l10n directory not found in repo; proceeding without it"
+          fi
           make dir
           cp settings/librewolf.cfg librewolf-152.0.2-1/lw/
           cp settings/distribution/policies.json librewolf-152.0.2-1/lw/
