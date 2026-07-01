@@ -1,0 +1,252 @@
+diff --git a/netwerk/protocol/yard/moz.build b/netwerk/protocol/yard/moz.build
+new file mode 100644
+--- /dev/null
++++ b/netwerk/protocol/yard/moz.build
+@@ -0,0 +1,16 @@
++# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
++# vim: set filetype=python:
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++XPIDL_SOURCES += [
++    "nsIYardProtocolHandler.idl",
++]
++
++XPIDL_MODULE = "necko_yard"
++
++UNIFIED_SOURCES += [
++    "nsYardProtocolHandler.cpp",
++]
++
++FINAL_LIBRARY = "xul"
+diff --git a/netwerk/protocol/yard/nsIYardProtocolHandler.idl b/netwerk/protocol/yard/nsIYardProtocolHandler.idl
+new file mode 100644
+--- /dev/null
++++ b/netwerk/protocol/yard/nsIYardProtocolHandler.idl
+@@ -0,0 +1,13 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#include "nsISupports.idl"
++
++/**
++ * The Yard protocol handler interface.
++ * Handles yard:// URIs in the form yard://[peer-id]/[resource-type]/[resource-path]
++ */
++[scriptable, uuid(a1b2c3d4-e5f6-7890-abcd-ef1234567890)]
++interface nsIYardProtocolHandler : nsISupports {
++};
+diff --git a/netwerk/protocol/yard/nsYardProtocolHandler.h b/netwerk/protocol/yard/nsYardProtocolHandler.h
+new file mode 100644
+--- /dev/null
++++ b/netwerk/protocol/yard/nsYardProtocolHandler.h
+@@ -0,0 +1,36 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#ifndef nsYardProtocolHandler_h__
++#define nsYardProtocolHandler_h__
++
++#include "nsIProtocolHandler.h"
++#include "nsIYardProtocolHandler.h"
++#include "nsString.h"
++
++#define NS_YARDPROTOCOLHANDLER_CONTRACTID "@mozilla.org/network/protocol;1?name=yard"
++#define NS_YARDPROTOCOLHANDLER_CID \
++  { 0xa1b2c3d4, 0xe5f6, 0x7890, \
++    { 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90 } }
++
++class nsYardProtocolHandler : public nsIProtocolHandler,
++                               public nsIYardProtocolHandler {
++ public:
++  NS_DECL_ISUPPORTS
++  NS_DECL_NSIPROTOCOLHANDLER
++  NS_DECL_NSIYARDPROTOCOLHANDLER
++
++  nsYardProtocolHandler() = default;
++
++  static already_AddRefed<nsYardProtocolHandler> Create() {
++    RefPtr<nsYardProtocolHandler> handler = new nsYardProtocolHandler();
++    return handler.forget();
++  }
++
++ private:
++  virtual ~nsYardProtocolHandler() = default;
++};
++
++extern "C" already_AddRefed<nsYardProtocolHandler>
++NS_NewYardProtocolHandler();
++
++#endif  // nsYardProtocolHandler_h__
+diff --git a/netwerk/protocol/yard/nsYardProtocolHandler.cpp b/netwerk/protocol/yard/nsYardProtocolHandler.cpp
+new file mode 100644
+--- /dev/null
++++ b/netwerk/protocol/yard/nsYardProtocolHandler.cpp
+@@ -0,0 +1,120 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++/*
++ * The Yard protocol handler.
++ *
++ * Handles yard:// URIs in the format:
++ *   yard://[peer-id]/[resource-type]/[resource-path]
++ *
++ * In v0.1 this is a stub: it parses the URI structure and returns
++ * a placeholder HTML page confirming the address was understood.
++ * Real DHT-based resolution is handled by the sidecar daemon (future).
++ */
++
++#include "nsYardProtocolHandler.h"
++#include "nsIURI.h"
++#include "nsIChannel.h"
++#include "nsILoadInfo.h"
++#include "nsNetUtil.h"
++#include "nsInputStreamChannel.h"
++#include "nsStringStream.h"
++#include "mozilla/dom/ContentParent.h"
++#include "nsNetCID.h"
++#include "prprf.h"
++
++NS_IMPL_ISUPPORTS(nsYardProtocolHandler,
++                  nsIProtocolHandler,
++                  nsIYardProtocolHandler)
++
++// ---------------------------------------------------------------------------
++// nsIProtocolHandler
++// ---------------------------------------------------------------------------
++
++NS_IMETHODIMP
++nsYardProtocolHandler::GetScheme(nsACString& aScheme) {
++  aScheme.AssignLiteral("yard");
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsYardProtocolHandler::GetDefaultPort(int32_t* aPort) {
++  // yard:// has no concept of ports — peer-id is the routing address
++  *aPort = -1;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsYardProtocolHandler::GetProtocolFlags(uint32_t* aFlags) {
++  // URI_NOAUTH: no user:password@ component
++  // URI_IS_UI_RESOURCE: treated as a trusted UI resource, not a web origin
++  // URI_IS_LOCAL_RESOURCE: no network security warnings
++  *aFlags = URI_NOAUTH | URI_IS_UI_RESOURCE | URI_IS_LOCAL_RESOURCE;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsYardProtocolHandler::NewChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo,
++                                   nsIChannel** aOutChannel) {
++  NS_ENSURE_ARG_POINTER(aURI);
++  NS_ENSURE_ARG_POINTER(aLoadInfo);
++
++  // Parse the yard:// URI into its components:
++  //   yard://[peer-id]/[resource-type]/[resource-path]
++  nsAutoCString spec;
++  nsresult rv = aURI->GetSpec(spec);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  // Strip the scheme prefix to get peer-id/resource-type/resource-path
++  nsAutoCString path;
++  rv = aURI->GetPathQueryRef(path);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsAutoCString host;
++  rv = aURI->GetHost(host);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  // For now, return a stub HTML page that confirms the address was parsed.
++  // This will be replaced by sidecar daemon communication in a future version.
++  nsCString responseBody;
++  responseBody.AppendLiteral("<!DOCTYPE html><html><head>"
++    "<meta charset='utf-8'>"
++    "<title>the yard</title>"
++    "<style>"
++    "body{font-family:monospace;background:#f5f0e8;color:#222;"
++    "max-width:600px;margin:80px auto;padding:0 20px;}"
++    "h1{font-size:1.1em;font-weight:normal;}"
++    ".addr{color:#666;font-size:0.9em;margin-top:2em;}"
++    ".note{color:#999;font-size:0.8em;margin-top:3em;}"
++    "</style></head><body>"
++    "<h1>the yard</h1>"
++    "<p>peer: ");
++  responseBody.Append(host);
++  responseBody.AppendLiteral("</p><p>path: ");
++  responseBody.Append(path);
++  responseBody.AppendLiteral("</p>"
++    "<p class='note'>v0.1 stub — peer resolution not yet active.</p>"
++    "</body></html>");
++
++  nsCOMPtr<nsIInputStream> inputStream;
++  rv = NS_NewCStringInputStream(getter_AddRefs(inputStream), responseBody);
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  nsCOMPtr<nsIChannel> channel;
++  rv = NS_NewInputStreamChannel(
++      getter_AddRefs(channel), aURI, inputStream.forget(),
++      aLoadInfo, NS_LITERAL_CSTRING("text/html"), NS_LITERAL_CSTRING("UTF-8"));
++  NS_ENSURE_SUCCESS(rv, rv);
++
++  channel.forget(aOutChannel);
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsYardProtocolHandler::AllowPort(int32_t aPort, const char* aScheme,
++                                  bool* aReturnValue) {
++  // No ports in yard://
++  *aReturnValue = false;
++  return NS_OK;
++}
++
++already_AddRefed<nsYardProtocolHandler>
++NS_NewYardProtocolHandler() {
++  return nsYardProtocolHandler::Create();
++}
+diff --git a/netwerk/protocol/moz.build b/netwerk/protocol/moz.build
+--- a/netwerk/protocol/moz.build
++++ b/netwerk/protocol/moz.build
+@@ -1,6 +1,7 @@
+ # -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+ # vim: set filetype=python:
+ DIRS += [
++    "yard",
+     "about",
+     "data",
+     "file",
+diff --git a/netwerk/build/nsNetModule.cpp b/netwerk/build/nsNetModule.cpp
+--- a/netwerk/build/nsNetModule.cpp
++++ b/netwerk/build/nsNetModule.cpp
+@@ -1,6 +1,7 @@
+ /* This Source Code Form is subject to the terms of the Mozilla Public
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++#include "netwerk/protocol/yard/nsYardProtocolHandler.h"
+ #include "necko-config.h"
+ #include "nsNetCID.h"
+ #include "nsNetModule.h"
+@@ -8,6 +9,14 @@
+ #include "mozilla/Components.h"
+ #include "mozilla/ModuleUtils.h"
+ 
++// Yard protocol handler registration
++NS_GENERIC_FACTORY_CONSTRUCTOR(nsYardProtocolHandler)
++NS_DEFINE_NAMED_CID(NS_YARDPROTOCOLHANDLER_CID);
++
++static const mozilla::Module::CIDEntry kYardCIDs[] = {
++  { &kNS_YARDPROTOCOLHANDLER_CID, false, nullptr, nsYardProtocolHandlerConstructor },
++  { nullptr }
++};
++
++static const mozilla::Module::ContractIDEntry kYardContracts[] = {
++  { NS_YARDPROTOCOLHANDLER_CONTRACTID, &kNS_YARDPROTOCOLHANDLER_CID },
++  { nullptr }
++};
