@@ -1,0 +1,44 @@
+diff --git a/netwerk/protocol/moz.build b/netwerk/protocol/moz.build
+--- a/netwerk/protocol/moz.build
++++ b/netwerk/protocol/moz.build
+@@ -1,6 +1,7 @@
+ # This Source Code Form is subject to the terms of the Mozilla Public
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ DIRS += [
++    "yard",
+     "about",
+     "data",
+     "file",
+diff --git a/netwerk/build/components.conf b/netwerk/build/components.conf
+--- a/netwerk/build/components.conf
++++ b/netwerk/build/components.conf
+@@ -end,0 +end @@
++
++Classes += [
++    {
++        'cid': '{a1b2c3d4-e5f6-7890-abcd-ef1234567890}',
++        'contract_ids': ['@mozilla.org/network/protocol;1?name=yard'],
++        'singleton': True,
++        'legacy_constructor': 'NS_NewYardProtocolHandler',
++        'headers': ['/netwerk/protocol/yard/nsYardProtocolHandler.h'],
++        'protocol_config': {
++            'scheme': 'yard',
++            'flags': [
++                'URI_NOAUTH',
++                'URI_IS_LOCAL_RESOURCE',
++                'URI_LOADABLE_BY_ANYONE',
++            ],
++        },
++    },
++]
+diff --git a/dom/security/nsContentSecurityManager.cpp b/dom/security/nsContentSecurityManager.cpp
+--- a/dom/security/nsContentSecurityManager.cpp
++++ b/dom/security/nsContentSecurityManager.cpp
+@@ -1025,7 +1025,7 @@
+-  if (innerURI->SchemeIs("jar") || innerURI->SchemeIs("about") ||
++  if (innerURI->SchemeIs("jar") || innerURI->SchemeIs("about") || innerURI->SchemeIs("yard") ||
+       innerURI->SchemeIs("moz-extension") ||
+       innerURI->SchemeIs("moz-safe-about")) {
+     return NS_OK;
+   }
