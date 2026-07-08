@@ -1,0 +1,20 @@
+[package]
+name = "yardd"
+version = "0.1.0"
+edition = "2021"
+description = "Local identity daemon for The Yard — wraps yard-identity behind a Unix socket, SSH-agent style"
+license = "MIT"
+
+[dependencies]
+yard-identity = { path = "../yard-identity" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+hex = "0.4"
+rand = "0.8"
+rand_core = { version = "0.6", features = ["std"] }
+libc = "0.2"
+subtle = "=2.6.1"
+
+[[bin]]
+name = "yardd"
+path = "src/main.rs"
